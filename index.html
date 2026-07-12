@@ -157,13 +157,15 @@
         <h1>◎ FocusCoach</h1>
         <div class="nav-links">
             <a href="#" class="active">Hoy</a>
-            <a href="#">Planificador</a>
+            <a href="planificador.html">Planificador</a>
             <a href="#">Historial</a>
+            <a href="#">Perfil</a>
         </div>
         <div class="user-avatar" id="userIcon">A</div>
     </nav>
 
     <div class="main-container">
+        <!-- Columna Izquierda -->
         <div class="left-col">
             <div class="card">
                 <h2 class="card-title">✨ Planificador IA</h2>
@@ -182,6 +184,7 @@
             </div>
         </div>
 
+        <!-- Columna Derecha -->
         <div class="right-col">
             <div class="card">
                 <h2 class="card-title">Acciones rápidas</h2>
@@ -192,7 +195,7 @@
     </div>
 
     <script>
-        // Aquí conectamos el Frontend con la API de Google Gemini
+        // Conexión actualizada con Backend de Vercel (API Gemini)
         async function consultarIA() {
             const inputElement = document.getElementById('userInput');
             const responseElement = document.getElementById('aiResponse');
@@ -205,40 +208,44 @@
             loaderElement.style.display = 'block';
             responseElement.innerHTML = '';
 
-            // Reemplaza esto con tu API Key real de Google AI Studio
-            const API_KEY = 'TU_API_KEY_AQUI'; 
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
-
             try {
-                const response = await fetch(API_URL, {
+                // Nos conectamos al puente seguro de Vercel
+                const response = await fetch('/api/gemini', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `Actúa como FocusCoach (coach de alto rendimiento). Responde a este objetivo: ${textoUsuario}`
-                            }]
-                        }]
-                    })
+                    body: JSON.stringify({ objetivo: textoUsuario })
                 });
 
-                const data = await response.json();
+                if (!response.ok) throw new Error('Error en el servidor');
+
+                const tareasGeneradas = await response.json();
                 
-                // Extraer el texto de la respuesta de la API
-                const respuestaIA = data.candidates[0].content.parts[0].text;
-                
-                // Ocultar carga y mostrar respuesta formateada (puedes usar la librería 'marked' luego para renderizar markdown real)
+                // Formateamos las micro-tareas para que se vean bien en esta vista
+                let respuestaFormateada = "<strong>Plan estructurado por tu Coach:</strong><br><br>";
+                tareasGeneradas.forEach(tarea => {
+                    respuestaFormateada += `• ${tarea.titulo} <em>(${tarea.tiempo})</em><br>`;
+                });
+
                 loaderElement.style.display = 'none';
-                responseElement.innerHTML = respuestaIA.replace(/\n/g, '<br>');
+                responseElement.innerHTML = respuestaFormateada;
+                inputElement.value = ''; // Limpiar el input
                 
             } catch (error) {
                 loaderElement.style.display = 'none';
-                responseElement.innerHTML = 'Error de conexión con el Coach. Verifica tu conexión o API Key.';
-                console.error(error);
+                responseElement.innerHTML = 'Error de conexión. Verifica la configuración en Vercel.';
+                console.error("Error técnico al conectar con la IA:", error);
             }
         }
+
+        // Simulación de carga del usuario logueado
+        window.onload = function() {
+            const usuarioActivo = localStorage.getItem('focuscoach_active_session');
+            if(usuarioActivo) {
+                document.getElementById('userIcon').textContent = usuarioActivo.charAt(0).toUpperCase();
+            }
+        };
     </script>
 </body>
 </html>
