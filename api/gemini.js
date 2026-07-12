@@ -1,75 +1,61 @@
-module.exports = async function(req, res) {
-    // 1. Verificación básica
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
     const { objetivo } = req.body;
     const API_KEY = process.env.GEMINI_API_KEY; 
-    
-    // Si Vercel no lee la llave
+
+    // 1. Verificamos si Vercel tiene la llave guardada
     if (!API_KEY) {
-        return res.status(200).json([{
-            titulo: "Vercel no está leyendo la variable GEMINI_API_KEY",
-            tiempo: "Error"
+        return res.status(200).json([{ 
+            titulo: "Falta configurar GEMINI_API_KEY en Vercel", 
+            tiempo: "Error Sistema" 
         }]);
     }
 
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
 
-    const systemPrompt = `Eres FocusCoach, un asistente de inteligencia artificial.
-    Desglosa esta meta en 2 o máximo 3 micro-tareas.
-    Responde ÚNICAMENTE en formato JSON estricto. 
-    Ejemplo: [{"titulo": "Revisar métricas", "tiempo": "20 min"}]
-    Meta: ${objetivo}`;
-
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: systemPrompt }]
-                }],
-                generationConfig: {
-                    temperature: 0.2
-                }
+                contents: [{ parts: [{ text: `Desglosa esto en 2 o 3 micro-tareas. Responde ÚNICAMENTE en JSON válido. Ejemplo: [{"titulo": "Leer documento", "tiempo": "10 min"}]. Meta: ${objetivo}` }] }],
+                generationConfig: { temperature: 0.2 }
             })
         });
 
         const data = await response.json();
-        
-        // EL TRUCO: Si Google rechaza la llave, enviamos su respuesta como una tarea visual
-        if (data.error) {
+
+        // 2. Si Google bloquea la petición (Ej: Llave sin facturación o inválida)
+        if (!response.ok || data.error) {
             return res.status(200).json([{
-                titulo: `Rechazo de Google: ${data.error.message}`,
-                tiempo: "Error de IA"
+                titulo: `Rechazo de Google: ${data.error?.message || response.statusText}`,
+                tiempo: "Alerta API"
             }]);
         }
 
-        // Si Google bloqueó el texto por seguridad
-        if (!data.candidates || data.candidates.length === 0) {
-             return res.status(200).json([{
-                titulo: "Google bloqueó la respuesta o devolvió un formato vacío.",
-                tiempo: "Alerta"
+        // 3. Si Google responde pero el formato viene vacío
+        if (!data.candidates || !data.candidates[0].content) {
+            return res.status(200).json([{ 
+                titulo: "Google no envió tareas estructuradas", 
+                tiempo: "Error IA" 
             }]);
         }
 
+        // 4. Si todo sale bien, limpiamos y enviamos las tareas
         let respuestaIA = data.candidates[0].content.parts[0].text;
         respuestaIA = respuestaIA.replace(/```json/gi, '').replace(/```/g, '').trim();
-        
         const tareasGeneradas = JSON.parse(respuestaIA);
         
-        // Todo exitoso
         res.status(200).json(tareasGeneradas);
 
     } catch (error) {
-        // Captura de cualquier otro colapso del código
-        res.status(200).json([{
-            titulo: `Fallo interno del código: ${error.message}`,
-            tiempo: "Error Crítico"
+        // 5. Si hay un problema interno de JavaScript, lo mostramos en pantalla
+        res.status(200).json([{ 
+            titulo: `Error de código: ${error.message}`, 
+            tiempo: "Fallo" 
         }]);
     }
 }
