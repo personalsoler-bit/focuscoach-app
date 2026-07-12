@@ -1,12 +1,9 @@
 module.exports = async function(req, res) {
-    // 1. Verificación de método
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
     const { objetivo } = req.body;
-    
-    // 2. Lectura segura de la llave en Vercel
     const API_KEY = process.env.GEMINI_API_KEY; 
     
     if (!API_KEY) {
@@ -18,7 +15,7 @@ module.exports = async function(req, res) {
     const systemPrompt = `Eres FocusCoach, un asistente de inteligencia artificial de élite especializado en alto rendimiento comercial.
     Desglosa esta meta en 2 o máximo 3 micro-tareas.
     Responde ÚNICAMENTE en formato JSON estricto. 
-    Ejemplo: [{"titulo": "Investigar", "tiempo": "20 min"}]
+    Ejemplo: [{"titulo": "Investigar métricas", "tiempo": "20 min"}]
     Meta: ${objetivo}`;
 
     try {
@@ -39,22 +36,23 @@ module.exports = async function(req, res) {
 
         const data = await response.json();
         
-        // Si Google rechaza la llave, esto nos dirá por qué
-        if (!response.ok) {
-            console.error("Error de Google:", data);
-            return res.status(500).json({ error: 'La IA de Google rechazó la conexión.' });
+        // EL BLINDAJE: Si Google devuelve un error por la llave o facturación
+        if (!response.ok || data.error) {
+            return res.status(500).json({ error: `Rechazo de Google: ${data.error?.message || 'Error de autenticación (Revisa que tu llave comience con AIza)'}` });
+        }
+
+        // Si la IA bloquea el contenido o devuelve una estructura vacía
+        if (!data.candidates || data.candidates.length === 0) {
+             return res.status(500).json({ error: 'Google bloqueó la respuesta o no devolvió tareas.' });
         }
 
         let respuestaIA = data.candidates[0].content.parts[0].text;
         respuestaIA = respuestaIA.replace(/```json/gi, '').replace(/```/g, '').trim();
         
         const tareasGeneradas = JSON.parse(respuestaIA);
-        
-        // Todo correcto, enviamos a tu interfaz azul
         res.status(200).json(tareasGeneradas);
 
     } catch (error) {
-        console.error("Error procesando:", error);
-        res.status(500).json({ error: 'Fallo al procesar el formato de la IA' });
+        res.status(500).json({ error: 'Error técnico interno: ' + error.message });
     }
 }
