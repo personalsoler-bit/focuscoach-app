@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusCoach - Planificador Semanal</title>
+    <style>
+        :root {
+            --primary-blue: #083A88;
+            --secondary-blue: #1565C0;
+            --bg-light: #F4F7F9;
+            --white: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --tag-bg: #E0F2FE;
+            --tag-text: #0284C7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            width: 100%;
+            max-width: 950px;
+            background: var(--white);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .navbar h1 {
+            color: var(--primary-blue);
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a.active {
+            color: var(--secondary-blue);
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            background: #42A5F5;
+            color: var(--white);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* --- Estructura Principal --- */
+        .main-container {
+            width: 100%;
+            max-width: 950px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            color: var(--primary-blue);
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        /* --- Calendario Semanal --- */
+        .calendar-area {
+            border: 1px dashed #CBD5E1;
+            border-radius: 8px;
+            min-height: 380px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            padding: 10px;
+            background-color: #F8FAFC;
+        }
+
+        .calendar-day {
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            min-height: 350px;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .calendar-day.drag-over {
+            background-color: #F0F9FF;
+            border: 2px dashed var(--secondary-blue);
+        }
+
+        .day-header {
+            text-align: center;
+            padding: 10px 0;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            background-color: #F1F5F9;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .dropzone {
+            flex-grow: 1;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 50px;
+        }
+
+        /* --- Micro-tareas --- */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 100px;
+        }
+
+        .task-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background-color: var(--white);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: grab;
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+
+        .task-item:active {
+            cursor: grabbing;
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            border: 2px dashed var(--secondary-blue);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .task-info h4 {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .task-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* Ajuste visual dentro del calendario */
+        .dropzone .task-item {
+            padding: 8px;
+            gap: 5px;
+        }
+        .dropzone .task-info h4 { font-size: 0.75rem; }
+        .dropzone .task-info p { font-size: 0.65rem; }
+        .dropzone .tag { font-size: 0.55rem; padding: 2px 6px; }
+        .dropzone .task-header { flex-direction: column; gap: 5px; }
+
+        /* --- Generador IA --- */
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--secondary-blue);
+        }
+
+        .btn-primary {
+            width: 100%;
+            background-color: var(--secondary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-blue);
+        }
+
+        .loader {
+            display: none;
+            color: var(--secondary-blue);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1 onclick="window.location.href='index.html'"><span style="font-size: 1.2rem;">◎</span> FocusCoach</h1>
+        <div class="nav-links">
+            <a href="index.html">Hoy</a>
+            <a href="#" class="active">Planificador</a>
+            <a href="#">Historial</a>
+            <a href="#">Perfil</a>
+        </div>
+        <div class="user-avatar" id="userIcon">A</div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Columna Izquierda: Planificador Semanal -->
+        <div class="left-col">
+            <div class="card">
+                <h2 class="card-title">Planificador Semanal</h2>
+                <p class="card-subtitle">Arrastra micro-tareas al calendario</p>
+                
+                <div class="calendar-area">
+                    <div class="calendar-day">
+                        <div class="day-header">Lun</div>
+                        <div class="dropzone" id="day-1"></div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-header">Mar</div>
+                        <div class="dropzone" id="day-2"></div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-header">Mié</div>
+                        <div class="dropzone" id="day-3"></div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-header">Jue</div>
+                        <div class="dropzone" id="day-4"></div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-header">Vie</div>
+                        <div class="dropzone" id="day-5"></div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-header">Sáb</div>
+                        <div class="dropzone" id="day-6"></div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-header">Dom</div>
+                        <div class="dropzone" id="day-7"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Micro-tareas y Generador -->
+        <div class="right-col">
+            
+            <div class="card">
+                <h2 class="card-title" style="font-size: 1.15rem;">Micro-tareas</h2>
+                <div class="task-list dropzone" id="task-pool">
+                    
+                    <div class="task-item" draggable="true">
+                        <div class="task-header">
+                            <div class="task-info">
+                                <h4>Vocabulario 10 palabras</h4>
+                                <p>10 min</p>
+                            </div>
+                            <span class="tag">LEARNING</span>
+                        </div>
+                    </div>
+
+                    <div class="task-item" draggable="true">
+                        <div class="task-header">
+                            <div class="task-info">
+                                <h4>Resumen 1 página</h4>
+                                <p>15 min</p>
+                            </div>
+                            <span class="tag" style="background: #E0F2FE; color: #0284C7;">WRITING</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title" style="font-size: 1.15rem;">Generar Micro-tareas</h2>
+                <input type="text" id="aiTaskInput" placeholder="Ej: Quiero dividir mi ensayo...">
+                <button class="btn-primary" onclick="generarMicroTareas()">Auto-plan IA</button>
+                <div id="aiLoader" class="loader">Procesando con la IA...</div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Lógica para Arrastrar y Soltar (Drag & Drop) ---
+        let elementoArrastrado = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar eventos de arrastre para las tareas que ya existen en el HTML
+            document.querySelectorAll('.task-item').forEach(inicializarDragDropParaTarea);
+
+            // Configurar las zonas donde se pueden soltar (El Pool de tareas y los 7 días)
+            const zonasDrop = document.querySelectorAll('.dropzone');
+            zonasDrop.forEach(zona => {
+                zona.addEventListener('dragover', function(e) {
+                    e.preventDefault(); // Necesario para permitir soltar
+                    if(this.parentElement.classList.contains('calendar-day')) {
+                        this.parentElement.classList.add('drag-over');
+                    }
+                });
+
+                zona.addEventListener('dragleave', function() {
+                    if(this.parentElement.classList.contains('calendar-day')) {
+                        this.parentElement.classList.remove('drag-over');
+                    }
+                });
+
+                zona.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if(this.parentElement.classList.contains('calendar-day')) {
+                        this.parentElement.classList.remove('drag-over');
+                    }
+                    if (elementoArrastrado) {
+                        this.appendChild(elementoArrastrado);
+                    }
+                });
+            });
+
+            // Cargar avatar del usuario si existe sesión
+            const usuarioActivo = localStorage.getItem('focuscoach_active_session');
+            if(usuarioActivo) {
+                document.getElementById('userIcon').textContent = usuarioActivo.charAt(0).toUpperCase();
+            }
+        });
+
+        // Función para aplicar eventos a nuevas tareas generadas
+        function inicializarDragDropParaTarea(tarea) {
+            tarea.addEventListener('dragstart', function() {
+                elementoArrastrado = this;
+                setTimeout(() => this.classList.add('dragging'), 0);
+            });
+
+            tarea.addEventListener('dragend', function() {
+                setTimeout(() => {
+                    this.classList.remove('dragging');
+                    elementoArrastrado = null;
+                }, 0);
+                document.querySelectorAll('.calendar-day').forEach(dia => {
+                    dia.classList.remove('drag-over');
+                });
+            });
+        }
+
+        // --- 2. Lógica de Conexión con Backend de Vercel (API Gemini) ---
+        async function generarMicroTareas() {
+            const input = document.getElementById('aiTaskInput');
+            const loader = document.getElementById('aiLoader');
+            const objetivo = input.value.trim();
+
+            if (objetivo === "") return;
+
+            // Mostrar estado de carga
+            loader.style.display = 'block';
+
+            try {
+                // Llamamos a la función segura en Vercel
+                const response = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ objetivo: objetivo })
+                });
+
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+                const tareasGeneradas = await response.json();
+
+                // Ocultar carga y limpiar input
+                loader.style.display = 'none';
+                input.value = '';
+
+                // Crear cada tarea en el DOM
+                tareasGeneradas.forEach(tarea => {
+                    crearElementoTarea(tarea.titulo, tarea.tiempo, 'AI PLAN', '#E0F2FE', '#0284C7');
+                });
+
+            } catch (error) {
+                loader.style.display = 'none';
+                console.error("Error técnico al conectar con la IA:", error);
+                alert("Fallo de conexión. Verifica que el proyecto esté desplegado correctamente en Vercel y la variable GEMINI_API_KEY esté configurada.");
+            }
+        }
+
+        // --- 3. Renderizado Visual de Nuevas Tareas ---
+        function crearElementoTarea(titulo, tiempo, etiqueta, bgEtiqueta, colorEtiqueta) {
+            const lista = document.getElementById('task-pool');
+            
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.setAttribute('draggable', 'true');
+            
+            // Borde distintivo para las tareas generadas por la IA
+            if(etiqueta === 'AI PLAN') {
+                div.style.border = '2px solid var(--secondary-blue)';
+            }
+
+            div.innerHTML = `
+                <div class="task-header">
+                    <div class="task-info">
+                        <h4>${titulo}</h4>
+                        <p>${tiempo}</p>
+                    </div>
+                    <span class="tag" style="background: ${bgEtiqueta}; color: ${colorEtiqueta};">${etiqueta}</span>
+                </div>
+            `;
+
+            lista.appendChild(div);
+            
+            // Activamos el Drag & Drop en este nuevo elemento recién creado
+            inicializarDragDropParaTarea(div);
+        }
+    </script>
+</body>
+</html>

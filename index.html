@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusCoach - Ecosistema de Rendimiento</title>
+    <style>
+        :root {
+            --primary-blue: #0A3D91;
+            --secondary-blue: #1565C0;
+            --accent-blue: #42A5F5;
+            --bg-light: #F0F4F8;
+            --white: #FFFFFF;
+            --text-dark: #333333;
+            --text-muted: #666666;
+            --border-color: #E0E9F1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .navbar {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--white);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .navbar h1 {
+            color: var(--primary-blue);
+            font-size: 1.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--secondary-blue);
+        }
+
+        .user-avatar {
+            background: var(--accent-blue);
+            color: var(--white);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-blue);
+        }
+
+        .ai-response-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-light);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 4px;
+            min-height: 100px;
+        }
+
+        .loader {
+            display: none;
+            color: var(--secondary-blue);
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1>◎ FocusCoach</h1>
+        <div class="nav-links">
+            <a href="#" class="active">Hoy</a>
+            <a href="#">Planificador</a>
+            <a href="#">Historial</a>
+        </div>
+        <div class="user-avatar" id="userIcon">A</div>
+    </nav>
+
+    <div class="main-container">
+        <div class="left-col">
+            <div class="card">
+                <h2 class="card-title">✨ Planificador IA</h2>
+                <p>Cuéntame qué quieres lograr hoy y estructuraré tu sesión.</p>
+                
+                <div class="input-group">
+                    <input type="text" id="userInput" placeholder="Ej: Quiero estructurar las llamadas en frío de hoy...">
+                    <button class="btn-primary" onclick="consultarIA()">Planificar</button>
+                </div>
+                
+                <div id="loading" class="loader">Analizando objetivo...</div>
+                
+                <div id="aiResponse" class="ai-response-area">
+                    Aquí aparecerá la estructuración de tu coach.
+                </div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="card">
+                <h2 class="card-title">Acciones rápidas</h2>
+                <button class="btn-primary" style="width: 100%; margin-bottom: 10px;">Iniciar sesión de 25m</button>
+                <button class="btn-primary" style="width: 100%; background: var(--bg-light); color: var(--primary-blue); border: 1px solid var(--primary-blue);">Bloquear distracciones</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Aquí conectamos el Frontend con la API de Google Gemini
+        async function consultarIA() {
+            const inputElement = document.getElementById('userInput');
+            const responseElement = document.getElementById('aiResponse');
+            const loaderElement = document.getElementById('loading');
+            
+            const textoUsuario = inputElement.value;
+            if (!textoUsuario) return;
+
+            // Mostrar estado de carga
+            loaderElement.style.display = 'block';
+            responseElement.innerHTML = '';
+
+            // Reemplaza esto con tu API Key real de Google AI Studio
+            const API_KEY = 'TU_API_KEY_AQUI'; 
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Actúa como FocusCoach (coach de alto rendimiento). Responde a este objetivo: ${textoUsuario}`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Extraer el texto de la respuesta de la API
+                const respuestaIA = data.candidates[0].content.parts[0].text;
+                
+                // Ocultar carga y mostrar respuesta formateada (puedes usar la librería 'marked' luego para renderizar markdown real)
+                loaderElement.style.display = 'none';
+                responseElement.innerHTML = respuestaIA.replace(/\n/g, '<br>');
+                
+            } catch (error) {
+                loaderElement.style.display = 'none';
+                responseElement.innerHTML = 'Error de conexión con el Coach. Verifica tu conexión o API Key.';
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusCoach - Acceso de Equipo</title>
+    <style>
+        :root {
+            --primary-blue: #0A3D91;
+            --secondary-blue: #1565C0;
+            --accent-blue: #42A5F5;
+            --bg-light: #F0F4F8;
+            --white: #FFFFFF;
+            --text-dark: #333333;
+            --border-color: #E0E9F1;
+            --error-red: #D32F2F;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .auth-container {
+            background: var(--white);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .auth-header p {
+            color: var(--text-dark);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .btn-primary {
+            width: 100%;
+            background-color: var(--secondary-blue);
+            color: var(--white);
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-blue);
+        }
+
+        .error-msg {
+            color: var(--error-red);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .toggle-auth {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .toggle-auth a {
+            color: var(--secondary-blue);
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .toggle-auth a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>◎ FocusCoach</h1>
+            <p id="authSubtitle">Ingresa tus credenciales para continuar</p>
+        </div>
+
+        <form id="authForm">
+            <div class="form-group" id="nameGroup" style="display: none;">
+                <label for="userName">Nombre Completo</label>
+                <input type="text" id="userName" placeholder="Ej: Juan Pérez">
+            </div>
+
+            <div class="form-group">
+                <label for="userEmail">Correo Electrónico</label>
+                <input type="email" id="userEmail" placeholder="correo@empresa.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="userPassword">Contraseña</label>
+                <input type="password" id="userPassword" placeholder="••••••••" required>
+            </div>
+
+            <p id="errorText" class="error-msg">Credenciales incorrectas.</p>
+
+            <button type="submit" class="btn-primary" id="submitBtn">Iniciar Sesión</button>
+        </form>
+
+        <div class="toggle-auth">
+            <span id="toggleText">¿No tienes cuenta?</span> 
+            <a onclick="toggleMode()" id="toggleLink">Regístrate aquí</a>
+        </div>
+    </div>
+
+    <script>
+        // Lógica Vanilla JS para manejar la vista de Login/Registro
+        let isLoginMode = true;
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            const nameGroup = document.getElementById('nameGroup');
+            const submitBtn = document.getElementById('submitBtn');
+            const toggleText = document.getElementById('toggleText');
+            const toggleLink = document.getElementById('toggleLink');
+            const authSubtitle = document.getElementById('authSubtitle');
+            
+            // Limpiar errores
+            document.getElementById('errorText').style.display = 'none';
+
+            if (isLoginMode) {
+                nameGroup.style.display = 'none';
+                submitBtn.textContent = 'Iniciar Sesión';
+                authSubtitle.textContent = 'Ingresa tus credenciales para continuar';
+                toggleText.textContent = '¿No tienes cuenta?';
+                toggleLink.textContent = 'Regístrate aquí';
+            } else {
+                nameGroup.style.display = 'block';
+                submitBtn.textContent = 'Crear Cuenta';
+                authSubtitle.textContent = 'Registra un nuevo perfil en el sistema';
+                toggleText.textContent = '¿Ya tienes cuenta?';
+                toggleLink.textContent = 'Inicia sesión';
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const name = document.getElementById('userName').value;
+
+            // Aquí es donde simulamos el proceso por ahora.
+            // En un entorno real, aquí harías un fetch() a tu base de datos.
+            
+            if (!isLoginMode) {
+                // Modo Registro: Guardamos los datos localmente como simulación
+                const userData = { email, password, name };
+                localStorage.setItem('focuscoach_user_' + email, JSON.stringify(userData));
+                alert('Cuenta creada con éxito. Ahora puedes iniciar sesión.');
+                toggleMode(); // Volver al login
+                this.reset();
+            } else {
+                // Modo Login: Verificamos si existe en la simulación
+                const storedUser = localStorage.getItem('focuscoach_user_' + email);
+                
+                if (storedUser) {
+                    const parsedUser = JSON.parse(storedUser);
+                    if (parsedUser.password === password) {
+                        // Éxito: Guardar sesión activa y redirigir al Dashboard
+                        localStorage.setItem('focuscoach_active_session', parsedUser.name);
+                        window.location.href = 'index.html'; 
+                    } else {
+                        mostrarError('Contraseña incorrecta.');
+                    }
+                } else {
+                    mostrarError('El usuario no existe.');
+                }
+            }
+        });
+
+        function mostrarError(mensaje) {
+            const errorElement = document.getElementById('errorText');
+            errorElement.textContent = mensaje;
+            errorElement.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
