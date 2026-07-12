@@ -10,15 +10,15 @@ module.exports = async function(req, res) {
         return res.status(200).json([{ titulo: "Falta GEMINI_API_KEY en Vercel", tiempo: "Error" }]);
     }
 
-    // Ya no pegamos la llave aquí en la URL
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent`;
+    // El cambio está en esta línea: usamos gemini-1.5-flash que es el modelo global activo
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-goog-api-key': API_KEY // La enviamos de forma nativa y segura aquí
+                'x-goog-api-key': API_KEY
             },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: `Desglosa esto en 2 o 3 micro-tareas. Responde ÚNICAMENTE en JSON válido. Ejemplo: [{"titulo": "Estructurar presentación", "tiempo": "10 min"}]. Meta: ${objetivo}` }] }],
